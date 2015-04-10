@@ -17,8 +17,11 @@ public class Alocacao {
 		List<Candidato> result =alocar();
 		imprimirSituacao(result);
 		System.out.println("----------------Result 2----------------------------");
-		List<Candidato> result2 =alocar2();
+		List<Candidato> result2 = alocar2();
 		imprimirSituacao(result2);
+		System.out.println("----------------Result 3----------------------------");
+		List<Candidato> result3 = alocarRecursivo();
+		imprimirSituacao(result3);
 	}
 	
 	public static void popular(){
@@ -98,13 +101,8 @@ public class Alocacao {
 	{
 		List<Candidato> result = candidatos;
 		Collections.sort(result);
-		Local limbo = new Local(99, 0);
-		ofertas.add(limbo);
-		for(Candidato c2:result)
-		{
-			c2.preferencias.add(c2.localAtual);
-			movimentaLocal(c2, limbo);
-		}
+		Local limbo = criarLimbo();
+		enviaParaLimbo(result, limbo);
 		for(int i=0; i< result.size(); i++){
 			Candidato candidato = result.get(i);
 			boolean monvimento = false;
@@ -172,6 +170,53 @@ public class Alocacao {
 		for(Candidato c:list)
 		{
 			System.out.println("C" + c.id + " L"+c.localAtual + " S" + c.grauSatisfacao);
+		}
+	}
+	
+	public static List<Candidato> alocarRecursivo(){
+		List<Candidato> result = candidatos;
+		Collections.sort(result);
+		Local limbo = criarLimbo();
+		enviaParaLimbo(result, limbo);
+		
+		if(alocarRecursivo(result, 0, limbo)){
+			System.out.println("Solução encontrada!");
+		} else {
+			System.out.println("Problema sem solução!");
+		}
+		return result;
+	}
+	
+	private static boolean alocarRecursivo(List<Candidato> result, int index, Local limbo){
+		if(index >= result.size()){ // caso base
+			return true;
+		}
+		Candidato c = result.get(index);
+		for(Integer prefId : c.preferencias){
+			Local pref = recuperaLocal(prefId);
+			if(pref.vagasAbertas > 0){
+				movimentaLocal(c, pref);
+				if(alocarRecursivo(result, index+1, limbo)){
+					return true;
+				}
+			}
+		}
+		System.out.println("BT: C" + c.id + " sem alocação disponível");
+		movimentaLocal(c, limbo);
+		return false;
+	}
+	
+	private static Local criarLimbo(){
+		Local limbo = new Local(99, 0);
+		ofertas.add(limbo);
+		return limbo;
+	}
+	
+	private static void enviaParaLimbo(List<Candidato> result, Local limbo){
+		for(Candidato c2:result)
+		{
+			c2.preferencias.add(c2.localAtual);
+			movimentaLocal(c2, limbo);
 		}
 	}
 
